@@ -39,9 +39,11 @@
  ;extend dataset type to show in gorilla-repl interface
 (extend-type incanter.core.Dataset
     render/Renderable
-    (render [self]
+    (render [self & {:keys [rows cols except-rows except-cols filter-fn all] :as opts}]
             (let [rendfn (fn [open close sep r] (list-like (map render/render r) (pr-str r) open close sep))
-                  rows (map (partial rendfn "<tr><td>" "</td></tr>" "</td><td>") (incore/to-list self))
+                  rows (map (partial rendfn "<tr><td>" "</td></tr>" "</td><td>") 
+                             (incore/to-list (if (not= {} opts)
+                                                (sel self opts) (sel self :rows 10))))
                   heading (if-let [cols (:column-names self)]
                             [(rendfn "<tr><th>" "</th></tr>" "</th><th>" cols)]
                             [])
