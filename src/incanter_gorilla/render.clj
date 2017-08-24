@@ -1,6 +1,7 @@
 (ns incanter-gorilla.render
   (:require [clojure.data.codec.base64 :as b64]
             [incanter.core :as incore]
+            [clojure.core.matrix.impl.dataset :as md]
             [gorilla-renderable.core :as render]))
 
 (defn chart->byte-array
@@ -25,7 +26,7 @@
        :content (format "<img src=\"data:image/PNG;base64,%1$s\"/>" (String. (b64/encode bytes)))
        :value   (pr-str self)})))
 
-(defn- list-like
+(defn list-like
   "util function used in render"
   [data value open close separator]
   {:type :list-like
@@ -37,13 +38,13 @@
 
 
  ;extend dataset type to show in gorilla-repl interface
-(extend-type incanter.core.Dataset
+(extend-type clojure.core.matrix.impl.dataset.DataSet
     render/Renderable
     (render [self & {:keys [rows cols except-rows except-cols filter-fn all] :as opts}]
             (let [rendfn (fn [open close sep r] (list-like (map render/render r) (pr-str r) open close sep))
                   rows (map (partial rendfn "<tr><td>" "</td></tr>" "</td><td>") 
-                             (incore/to-list (if (not= {} opts)
-                                                (sel self opts) (sel self :rows 10))))
+                             ;(incore/to-list (if (not= {} opts) (incore/sel self opts) (incore/sel self :rows 10))))
+                             (incore/to-list (if (> (incore/nrow self) 10) (incore/sel self :rows (range 10)) self)))
                   heading (if-let [cols (:column-names self)]
                             [(rendfn "<tr><th>" "</th></tr>" "</th><th>" cols)]
                             [])
